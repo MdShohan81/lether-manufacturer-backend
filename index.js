@@ -21,6 +21,7 @@ async function run(){
     try{
         await client.connect();
         const productCollection = client.db('mfct').collection('product');
+        const orderCollection = client.db('mfct').collection('order');
     
         app.get('/product', async (req, res) => {
             const query = {};
@@ -34,7 +35,14 @@ async function run(){
             const query = {_id: ObjectId(id)};
             const products = await productCollection.findOne(query);
             res.send(products);
+        });
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result)
         })
+
         
     }finally{
 
