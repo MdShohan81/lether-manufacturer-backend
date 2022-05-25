@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const res = require('express/lib/response');
@@ -22,7 +23,16 @@ async function run(){
         await client.connect();
         const productCollection = client.db('mfct').collection('product');
         const orderCollection = client.db('mfct').collection('order');
-    
+        //auth
+        app.post('/login', async(req, res) => {
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '1d'
+            });
+            res.send({accessToken});
+        });
+
+        //get all product
         app.get('/product', async (req, res) => {
             const query = {};
             const cursor = productCollection.find(query);
