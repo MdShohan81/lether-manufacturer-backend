@@ -43,14 +43,6 @@ async function run(){
         const orderCollection = client.db('mfct').collection('order');
         const userCollection = client.db('mfct').collection('users');
 
-        //auth
-        app.post('/login', async(req, res) => {
-            const user = req.body;
-            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-                expiresIn: '1d'
-            });
-            res.send({accessToken});
-        });
 
         //get all product
         app.get('/product', async (req, res) => {
@@ -77,7 +69,8 @@ async function run(){
                 $set: user,
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
-            res.send(result);
+            const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
+            res.send({result, token});
         });
 
 
@@ -90,17 +83,18 @@ async function run(){
 
         // order get api
 
-        app.get('/order', verifyJWT, async (req, res) => {
-            const decodedEmail = req.decoded.email;
+        app.get('/order', verifyJWT,  async (req, res) => {
             const email = req.query.email;
+            const decodedEmail = req.decoded.email;
             if(email === decodedEmail){
                 const query = {email: email};
-            const cursor = orderCollection.find(query);
-            const orders = await cursor.toArray();
-            res.send(orders);
+                const cursor = orderCollection.find(query);
+                const orders = await cursor.toArray();
+                return res.send(orders);
             }else{
-                res.status(403).send({message: 'Forbidden access'});
+                return res.status(403).send({message: 'forbidden access'});
             }
+           
         });
 
         //delete api
