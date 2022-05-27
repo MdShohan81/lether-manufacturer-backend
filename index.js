@@ -59,23 +59,42 @@ async function run(){
             res.send(products);
         });
 
+        //product post
+        app.post('/product', async(req, res) => {
+            const newProduct = req.body;
+            const result = await productCollection.insertOne(newProduct);
+            res.send(result);
+        });
+
         //get user
         app.get('/user', verifyJWT, async(req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users)
         });
 
-        //admin api
-        app.put('/user/:admin/:email', async(req, res) => {
+        app.get('/admin/:email', async(req, res) => {
             const email = req.params.email;
-            
-            const filter = {email: email};
-            
+            const user = await userCollection.findOne({email: email});
+            const isAdmin = user.role === 'admin';
+            res.send({admin: isAdmin});
+        })
+
+        //admin api
+        app.put('/user/:admin/:email', verifyJWT, async(req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAcc = await userCollection.findOne({ email: requester });
+            if(requesterAcc.role === 'admin'){
+                const filter = {email: email};
             const updateDoc = {
                 $set: {role: 'admin'},
             };
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
+            }else{
+                res.status(403).send({message: 'forbidden'});
+            }
+            
         });
 
         //users api
