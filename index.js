@@ -70,6 +70,14 @@ async function run(){
             res.send(result);
         });
 
+        //product Delete
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await productCollection.deleteOne(query);
+            res.send(result);
+        })
+
         //all reviews api
         app.get('/review', async (req, res) => {
             const query = {};
@@ -197,12 +205,15 @@ async function run(){
            
         });
 
+       
+
         app.get('/order/:id', verifyJWT, async(req, res) => {
             const id = req.params.id;
             const query = {_id: ObjectId(id)};
             const result = await orderCollection.findOne(query);
             res.send(result)
         });
+
 
        
 
