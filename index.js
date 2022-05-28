@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const res = require('express/lib/response');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -42,6 +43,7 @@ async function run(){
         const productCollection = client.db('mfct').collection('product');
         const orderCollection = client.db('mfct').collection('order');
         const userCollection = client.db('mfct').collection('users');
+        const paymentCollection = client.db('mfct').collection('payments');
 
 
         //get all product
@@ -64,6 +66,18 @@ async function run(){
             const newProduct = req.body;
             const result = await productCollection.insertOne(newProduct);
             res.send(result);
+        });
+
+        app.post('/create-payment-intent', verifyJWT, async(req,res) => {
+            const product = req.body;
+            const price = product.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types:['card']
+            });
+            res.send({clientSecret: paymentIntent.client_secret})
         });
 
         //get user
@@ -119,6 +133,23 @@ async function run(){
             res.send(result)
         });
 
+        app.patch('/order/:id', verifyJWT, async(req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            
+            const result = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc)
+
+        });
+
         // order get api
 
         app.get('/order', verifyJWT,  async (req, res) => {
@@ -140,7 +171,9 @@ async function run(){
             const query = {_id: ObjectId(id)};
             const result = await orderCollection.findOne(query);
             res.send(result)
-        })
+        });
+
+       
 
         //delete api
         app.delete('/order/:id', async(req, res) => {
