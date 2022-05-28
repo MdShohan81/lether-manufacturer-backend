@@ -45,6 +45,7 @@ async function run(){
         const userCollection = client.db('mfct').collection('users');
         const paymentCollection = client.db('mfct').collection('payments');
         const reviewCollection = client.db('mfct').collection('reviews');
+        const profileCollection = client.db('mfct').collection('profiles');
 
 
         //get all product
@@ -83,6 +84,20 @@ async function run(){
             const result = await reviewCollection.insertOne(newReview);
             res.send(result);
         });
+
+        //profile post api
+        app.post('/profile', async(req, res) => {
+            const newProfile = req.body;
+            const result = await profileCollection.insertOne(newProfile);
+            res.send(result);
+        });
+        app.get('/profile', async (req, res) => {
+            const query = {};
+            const cursor = profileCollection.find(query);
+            const profiles = await cursor.toArray();
+            res.send(profiles);
+        });
+
 
         app.post('/create-payment-intent', verifyJWT, async(req,res) => {
             const product = req.body;
