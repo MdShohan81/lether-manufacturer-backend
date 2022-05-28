@@ -44,6 +44,7 @@ async function run(){
         const orderCollection = client.db('mfct').collection('order');
         const userCollection = client.db('mfct').collection('users');
         const paymentCollection = client.db('mfct').collection('payments');
+        const reviewCollection = client.db('mfct').collection('reviews');
 
 
         //get all product
@@ -65,6 +66,21 @@ async function run(){
         app.post('/product', async(req, res) => {
             const newProduct = req.body;
             const result = await productCollection.insertOne(newProduct);
+            res.send(result);
+        });
+
+        //all reviews api
+        app.get('/review', async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        //Review post api
+        app.post('/review', async(req, res) => {
+            const newReview = req.body;
+            const result = await reviewCollection.insertOne(newReview);
             res.send(result);
         });
 
